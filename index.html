@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Standard Drink Calculator</title>
+<meta name="robots" content="noindex, nofollow">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f7f3ec; --card:#fffdf9; --ink:#231d16; --muted:#7a6e60; --line:#e6ddcf;
+    --amber:#c27a1a; --amber-soft:#f6e6cc; --accent-ink:#fff; --warn:#b4432c; --warn-soft:#f8e1da;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#16130f; --card:#201b16; --ink:#f2ebe0; --muted:#a8998a; --line:#352d25;
+      --amber:#e3a24a; --amber-soft:#3a2c19; --accent-ink:#1b150e; --warn:#ef8a72; --warn-soft:#3b211b; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto;padding:20px 16px 48px}
+  header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:12px;margin-bottom:16px}
+  h1{font-family:Inter,system-ui,sans-serif;font-weight:700;font-size:clamp(26px,5vw,36px);margin:0;letter-spacing:-.02em}
+  h1 span{color:var(--amber)}
+  .sub{color:var(--muted);margin:4px 0 0;font-size:14px}
+  h2{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:19px;margin:0 0 10px}
+  select,input{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 11px;width:100%}
+  select:focus,input:focus{outline:2px solid var(--amber);outline-offset:1px}
+  label.sm{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+  .grid{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;align-items:start}
+  @media (max-width:780px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+  .searchbox{position:relative}
+  #search{font-size:17px;padding:12px 14px}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+  .chip{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+  .chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .count{font-size:12.5px;color:var(--muted);margin-bottom:4px}
+  .list{max-height:520px;overflow:auto;margin:0 -6px;padding:0 6px}
+  .item{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:10px 4px;font:inherit;color:inherit;cursor:pointer}
+  .item:hover,.item.sel{background:var(--amber-soft)}
+  .item .nm{font-weight:500}
+  .meta{font-size:12.5px;color:var(--muted)}
+  .pill{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:1px 6px;white-space:nowrap}
+  .fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .full{grid-column:1/-1}
+  .stepper{display:flex;align-items:stretch;gap:0}
+  .stepper button{width:44px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:20px;cursor:pointer}
+  .stepper button:first-child{border-radius:10px 0 0 10px}
+  .stepper button:last-child{border-radius:0 10px 10px 0}
+  .stepper input{border-radius:0;text-align:center;border-left:0;border-right:0}
+  .hint{font-size:12px;color:var(--muted);margin-top:4px}
+  .custom{display:none;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+  .custom.show{display:grid}
+  .seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .seg button{flex:1;border:0;background:var(--card);color:var(--ink);padding:9px 4px;font:inherit;font-size:13.5px;cursor:pointer;border-right:1px solid var(--line)}
+  .seg button:last-child{border-right:0}
+  .seg button.on{background:var(--ink);color:var(--bg)}
+  .result{text-align:center;padding:16px 8px 4px}
+  .big{font-family:Inter,system-ui,sans-serif;font-weight:700;font-size:60px;line-height:1;color:var(--amber)}
+  .big small{font-size:18px;color:var(--muted);font-weight:500;margin-left:4px}
+  .detail{color:var(--muted);font-size:13.5px;margin-top:6px}
+  .glasses{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin:12px 0 2px;min-height:28px}
+  .glass{width:18px;height:26px;border:2px solid var(--amber);border-top:0;border-radius:0 0 5px 5px;position:relative;overflow:hidden}
+  .glass i{position:absolute;left:0;right:0;bottom:0;background:var(--amber);opacity:.85}
+  .btn{border:0;border-radius:12px;padding:12px 16px;font:inherit;font-weight:600;cursor:pointer;background:var(--amber);color:var(--accent-ink);width:100%;margin-top:12px}
+  .btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);font-weight:500;padding:7px 11px;width:auto;margin:0;font-size:13.5px}
+  .tally{margin-top:16px}
+  .trow{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);gap:8px}
+  .trow .x{background:none;border:0;color:var(--muted);font-size:18px;cursor:pointer;padding:0 4px}
+  .total{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px}
+  .total b{font-family:Inter,system-ui,sans-serif;font-size:28px}
+  .flag{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:13.5px;display:none;background:var(--warn-soft);color:var(--warn)}
+  .flag.show{display:block}
+  .empty{color:var(--muted);font-size:13.5px;padding:10px 0}
+  .ref{margin-top:16px;font-size:13.5px;color:var(--muted)}
+  .formula{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:var(--amber-soft);color:var(--ink);padding:8px 10px;border-radius:8px;display:block;margin:8px 0;overflow-x:auto}
+  a{color:var(--amber)}
+  .toprow{display:flex;gap:8px;align-items:end}
+  .wide{width:100%;margin-top:8px;padding:10px 12px}
+  .saveform{display:none;margin-top:10px;padding:12px;border:1px dashed var(--line);border-radius:12px}
+  .saveform.show{display:block}
+  .saveform .row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+  .saveform .row.one{grid-template-columns:1fr}
+  .msg{font-size:13px;margin-top:8px;color:var(--muted)}
+  .msg.err{color:var(--warn)}
+  .pill.team{border-color:var(--amber);color:var(--amber)}
+  .teamstatus{font-size:12.5px;color:var(--muted);margin:-2px 0 6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Standard Drink <span>Calculator</span></h1>
+      <p class="sub">Search a brand, pick the package, set how many. Liquor proof can be changed.</p>
+    </div>
+    <div class="meta" style="text-align:right">US standard drink<br><b style="color:var(--ink)">0.6 fl oz pure alcohol</b></div>
+  </header>
+
+  <div class="grid">
+    <section class="card">
+      <input id="search" type="search" placeholder="Search brand (e.g. BuzzBallz, Steel Reserve, natty)" autocomplete="off">
+      <div class="chips" id="chips"></div>
+      <div class="count" id="count"></div>
+      <div class="teamstatus" id="teamStatus">Connecting to the team list…</div>
+      <div class="list" id="list"></div>
+    </section>
+
+    <section id="panel">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:start;gap:8px">
+          <div><h2 id="selName" style="margin:0">Custom drink</h2><div class="meta" id="selCat">Pick from the list, or fill in the details below</div></div>
+          <button class="btn ghost" id="newCustom" style="white-space:nowrap">New custom drink</button>
+        </div>
+        <div class="fields">
+          <div class="full" id="nameRow">
+            <label class="sm" for="cName">Drink name</label>
+            <input id="cName" maxlength="80" placeholder="e.g. Grandpa's homemade wine" autocomplete="off">
+          </div>
+          <div class="full" id="typeRow">
+            <label class="sm">Drink type</label>
+            <div class="seg" id="kindSeg">
+              <button data-k="beer" class="on">Beer / RTD / cocktails</button><button data-k="wine">Wine</button><button data-k="spirit">Liquor</button>
+            </div>
+          </div>
+          <div id="strengthBox">
+            <label class="sm" for="strength" id="strengthLbl">ABV %</label>
+            <input id="strength" type="number" inputmode="decimal" min="0" step="0.1">
+            <div class="hint" id="strengthHint"></div>
+          </div>
+          <div>
+            <label class="sm" for="qty">How many</label>
+            <div class="stepper"><button id="minus" aria-label="Fewer">−</button><input id="qty" type="number" inputmode="numeric" min="1" step="1" value="1"><button id="plus" aria-label="More">+</button></div>
+          </div>
+          <div class="full">
+            <label class="sm" for="pkg">Package</label>
+            <select id="pkg"></select>
+            <div class="custom" id="custom">
+              <input id="cSize" type="number" inputmode="decimal" min="0" step="0.1" placeholder="Size in fl oz">
+              <input id="cCount" type="number" inputmode="numeric" min="1" step="1" placeholder="Units per pack" value="1">
+            </div>
+          </div>
+          <div class="full">
+            <label class="sm">Amount drunk</label>
+            <div class="seg" id="portion">
+              <button data-p="1" class="on">All</button><button data-p="0.75">¾</button><button data-p="0.5">½</button><button data-p="0.25">¼</button>
+            </div>
+          </div>
+        </div>
+        <div class="result">
+          <div class="big" id="big">0.0<small>drinks</small></div>
+          <div class="glasses" id="glasses"></div>
+          <div class="detail" id="detail"></div>
+        </div>
+        <button class="btn" id="add">Add to log</button>
+        <button class="btn ghost wide" id="openSave">+ Submit a missing drink</button>
+        <div class="saveform" id="saveForm">
+          <div class="meta">Sends the type, strength and package set above for review. Once approved, everyone on the team will see it.</div>
+          <div class="row one"><div><label class="sm" for="sName">Drink name</label><input id="sName" maxlength="80" placeholder="e.g. BuzzBallz Tequila Rita"></div></div>
+          <div class="row">
+            <div><label class="sm" for="sCat">Category</label><select id="sCat"></select></div>
+            <div><label class="sm" for="sKeys">Search words (optional)</label><input id="sKeys" maxlength="120" placeholder="nicknames, flavors"></div>
+          </div>
+          <div class="row"><button class="btn" id="saveTeam" style="margin-top:4px">Submit</button><button class="btn ghost" id="cancelSave" style="margin-top:4px;width:100%">Cancel</button></div>
+          <div class="msg" id="saveMsg"></div>
+        </div>
+      </div>
+
+      <div class="card tally">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+          <h2 style="margin:0">Log</h2>
+          <div style="display:flex;gap:6px"><button class="btn ghost" id="copy">Copy</button><button class="btn ghost" id="clear">Clear</button></div>
+        </div>
+        <div id="tally"></div>
+        <div class="total"><span>Total US standard drinks</span><b id="tot">0.0</b></div>
+        <div class="flag" id="flag"></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="card ref">
+    <h2>How it's calculated</h2>
+    <code class="formula">pure alcohol (fl oz) = total fl oz × ABV<br>standard drinks = pure alcohol ÷ 0.6 fl oz<br>ABV % = proof ÷ 2</code>
+    <p>One US standard drink is 0.6 fl oz of pure alcohol: about a 12 oz beer at 5%, a 5 oz glass of wine at 12%, or a 1.5 oz shot of 80-proof liquor. Listed ABVs are typical US values. Some brands differ by state or by flavor (Four Loko, for example, is 12% in some states; a few BuzzBallz flavors run higher than 15%), so change the number when the label says something else. NIAAA's binge marker is about 4+ drinks for women or 5+ for men in roughly two hours. This tool is for education and doesn't estimate blood alcohol. Source: <a href="https://www.niaaa.nih.gov/alcohols-effects-health/what-standard-drink" target="_blank" rel="noopener">NIAAA — What is a standard drink?</a></p>
+  </section>
+</div>
+
+<script>
+const ML = 29.5735, DENSITY = 0.789;
+
+// ---------- Packages: [id, label, unit oz, units per pack] ----------
+const P = {
+  beer: [
+    ["c12","12 oz can / bottle",12,1,"Singles"],["b10","10 oz bottle",10,1,"Singles"],["b112","11.2 oz bottle",11.2,1,"Singles"],
+    ["t16","16 oz tallboy",16,1,"Singles"],["c192","19.2 oz can",19.2,1,"Singles"],["c235","23.5 oz can",23.5,1,"Singles"],
+    ["c24","24 oz can",24,1,"Singles"],["c25","25 oz can",25,1,"Singles"],["q32","32 oz bottle (quart)",32,1,"Singles"],
+    ["b40","40 oz bottle",40,1,"Singles"],
+    ["m187","6.3 oz (187 mL) ball / bottle",187/ML,1,"Small cocktail sizes"],["m192","6.5 oz (192 mL) ball / can",192/ML,1,"Small cocktail sizes"],["m200","6.8 oz (200 mL) ball / can",200/ML,1,"Small cocktail sizes"],
+    ["m375c","12.7 oz (375 mL) can / bottle",375/ML,1,"Small cocktail sizes"],["m500","16.9 oz (500 mL) carton / pouch",500/ML,1,"Small cocktail sizes"],
+    ["p4_200","4-pack (6.8 oz balls)",200/ML,4,"Multi-packs"],["p6_200","6-pack (6.8 oz balls)",200/ML,6,"Multi-packs"],
+    ["p4","4-pack (12 oz)",12,4,"Multi-packs"],["p4_16","4-pack (16 oz)",16,4,"Multi-packs"],
+    ["p6_10","6-pack (10 oz)",10,6,"Multi-packs"],["p6_112","6-pack (11.2 oz)",11.2,6,"Multi-packs"],
+    ["p6","6-pack (12 oz)",12,6,"Multi-packs"],["p8","8-pack (12 oz)",12,8,"Multi-packs"],
+    ["p12","12-pack (12 oz)",12,12,"Multi-packs"],["p15","15-pack (12 oz)",12,15,"Multi-packs"],
+    ["p18","18-pack (12 oz)",12,18,"Multi-packs"],["p24","24-pack (12 oz)",12,24,"Multi-packs"],["p30","30-pack (12 oz)",12,30,"Multi-packs"],
+    ["l15","50.7 oz (1.5 L) bottle, e.g. Biggie",1500/ML,1,"Large format"],["l175b","59.2 oz (1.75 L) bottle, e.g. Biggie",1750/ML,1,"Large format"],
+    ["custom","Custom size…",0,1,"Other"]
+  ],
+  wine: [
+    ["g5","5 oz glass",5,1],["g6","6 oz pour",6,1],["g9","9 oz large pour",9,1],["s187","6.3 oz (187 mL) split",187/ML,1],["w200","6.8 oz (200 mL)",200/ML,1],
+    ["w375","12.7 oz (375 mL) half bottle",375/ML,1],["w500","16.9 oz (500 mL) carton",500/ML,1],["w750","25.4 oz (750 mL) bottle",750/ML,1],["w1l","33.8 oz (1 L) carton",1000/ML,1],["w15","50.7 oz (1.5 L) bottle",1500/ML,1],
+    ["box3","101.4 oz (3 L) box",3000/ML,1],["box5","169 oz (5 L) box",5000/ML,1],["custom","Custom size…",0,1]
+  ],
+  spirit: [
+    ["shot","1.5 oz shot",1.5,1],["dbl","3 oz double",3,1],["nip","1.7 oz (50 mL) nip / shooter",50/ML,1],
+    ["m100","3.4 oz (100 mL)",100/ML,1],["m200","6.8 oz (200 mL) half pint",200/ML,1],["m375","12.7 oz (375 mL) pint",375/ML,1],
+    ["m750","25.4 oz (750 mL) fifth",750/ML,1],["l1","33.8 oz (1 L) liter",1000/ML,1],["l175","59.2 oz (1.75 L) handle",1750/ML,1],
+    ["custom","Custom size…",0,1]
+  ]
+};
+
+// ---------- Brand database ----------
+// Beer-type rows: [name, category, ABV %, default package, search aliases]
+// Wine rows:      [name, "Wine", ABV %, default package, aliases]
+// Liquor rows:    [name, category, PROOF, default package, aliases]
+const DB = [
+  // Domestic & light beer
+  ["Bud Light","Beer",4.2,"p12","bud lite"],["Budweiser","Beer",5.0,"p12","bud"],
+  ["Bud Light Lime","Beer",4.2,"p12",""],["Bud Ice","Beer",5.5,"t16",""],
+  ["Busch","Beer",4.3,"p30",""],["Busch Light","Beer",4.1,"p30","busch lite"],["Busch Ice","Beer",5.9,"c25",""],
+  ["Natural Light","Beer",4.2,"p30","natty light natty lite"],["Natural Ice","Beer",5.9,"c25","natty ice"],
+  ["Michelob Ultra","Beer",4.2,"p12","mich ultra"],["Coors Light","Beer",4.2,"p12",""],
+  ["Coors Banquet","Beer",5.0,"p12","coors original stubby"],["Keystone Light","Beer",4.1,"p30","stones"],
+  ["Miller Lite","Beer",4.2,"p12",""],["Miller High Life","Beer",4.6,"p12","champagne of beers"],
+  ["Miller64","Beer",2.8,"p12",""],["Milwaukee's Best","Beer",4.3,"p30","beast"],
+  ["Milwaukee's Best Light","Beer",4.1,"p30","beast light"],["Milwaukee's Best Ice","Beer",5.9,"c24","beast ice"],
+  ["Icehouse","Beer",5.5,"c24",""],["Pabst Blue Ribbon","Beer",4.7,"c24","pbr"],
+  ["Rolling Rock","Beer",4.4,"p12",""],["Yuengling Lager","Beer",4.5,"p12",""],
+  ["Shiner Bock","Beer",4.4,"p6",""],["Samuel Adams Boston Lager","Beer",5.0,"p6","sam adams"],
+  ["Blue Moon Belgian White","Beer",5.4,"p6",""],["Leinenkugel's Summer Shandy","Beer",4.2,"p12","leinie"],
+  ["Labatt Blue","Beer",5.0,"p12",""],["Labatt Blue Light","Beer",4.0,"p12",""],
+  // Imports
+  ["Modelo Especial","Beer",4.4,"p12","modelo"],["Negra Modelo","Beer",5.4,"p6","modelo negra"],
+  ["Corona Extra","Beer",4.6,"p12","corona"],["Corona Light","Beer",4.0,"p12",""],
+  ["Corona Premier","Beer",4.0,"p12",""],["Corona Familiar","Beer",4.8,"q32",""],
+  ["Pacifico","Beer",4.4,"p12",""],["Dos Equis Lager","Beer",4.2,"p12","xx dos xx"],
+  ["Tecate","Beer",4.5,"p12",""],["Heineken","Beer",5.0,"p12",""],["Stella Artois","Beer",5.0,"p6_112","stella"],
+  ["Guinness Draught","Beer",4.2,"p4_16","guinness"],
+  // Craft / IPA
+  ["Lagunitas IPA","Beer",6.2,"p6",""],["Voodoo Ranger IPA","Beer",7.0,"p6","new belgium"],
+  ["Voodoo Ranger Imperial IPA","Beer",9.0,"c192",""],["Founders All Day IPA","Beer",4.7,"p12",""],
+  ["Sierra Nevada Pale Ale","Beer",5.6,"p6",""],
+  ["Heineken 0.0","Beer",0.0,"p6","non alcoholic na"],["Non-alcoholic beer (generic)","Beer",0.5,"p6","na"],
+  // Malt liquor / high gravity
+  ["Steel Reserve 211","Malt liquor",8.1,"c24","steel 211 high gravity"],
+  ["Steel Reserve Alloy Series","Malt liquor",8.0,"c24","steel blue razz watermelon"],
+  ["Natty Daddy","Malt liquor",8.0,"c24","natural daddy"],["Hurricane High Gravity","Malt liquor",8.1,"c24",""],
+  ["Hurricane Malt Liquor","Malt liquor",5.8,"b40","hurricane malt"],
+  ["Olde English 800","Malt liquor",5.9,"b40","oe 8 ball"],["Colt 45","Malt liquor",6.1,"b40",""],
+  ["Mickey's","Malt liquor",5.6,"b40","grenade"],["King Cobra","Malt liquor",6.0,"b40",""],
+  ["Four Loko (14%)","Malt liquor",14.0,"c24","4 loko"],["Four Loko (12%)","Malt liquor",12.0,"c24","4 loko"],["Four Loko (10%)","Malt liquor",10.0,"c24","4 loko"],
+  ["Four Loko Pregame (14%)","Malt liquor",14.0,"m200","4 loko pre game"],["Four Loko Pregame (12%)","Malt liquor",12.0,"m200","4 loko pre game"],["Four Loko Pregame (10%)","Malt liquor",10.0,"m200","4 loko pre game"],
+  ["Bud Light Lime Lime-A-Rita","Malt liquor",8.0,"c25","limearita ritas"],
+  ["Bud Light Lime Straw-Ber-Rita","Malt liquor",8.0,"c25","strawberita ritas"],
+  // Hard seltzer
+  ["White Claw","Seltzer & RTD",5.0,"p12","claw"],["White Claw Surge","Seltzer & RTD",8.0,"c12",""],
+  ["White Claw 70","Seltzer & RTD",3.7,"p12",""],["Truly Hard Seltzer","Seltzer & RTD",5.0,"p12","truly"],["Truly Extra","Seltzer & RTD",8.0,"t16","truly extra"],
+  ["High Noon","Seltzer & RTD",4.5,"p12","vodka soda"],["Nütrl Vodka Seltzer","Seltzer & RTD",4.5,"p12","nutrl"],
+  ["Vizzy","Seltzer & RTD",5.0,"p12",""],["Michelob Ultra Organic Seltzer","Seltzer & RTD",4.0,"p12",""],
+  // Flavored malt / RTD
+  ["Twisted Tea","Seltzer & RTD",5.0,"c24","hard iced tea"],["Twisted Tea Extreme","Seltzer & RTD",8.0,"c24",""],
+  ["Twisted Tea Light","Seltzer & RTD",4.0,"p12",""],["Mike's Hard Lemonade","Seltzer & RTD",5.0,"p12","mikes"],
+  ["Mike's Harder Lemonade","Seltzer & RTD",8.0,"t16","mikes harder"],["Smirnoff Ice","Seltzer & RTD",4.5,"p6_112",""],["Smirnoff Ice Smash","Seltzer & RTD",8.0,"c235","smirnoff smash"],
+  ["Twisted Tea Half & Half","Seltzer & RTD",5.0,"c24","half and half"],
+  ["Jack Daniel's Country Cocktails","Seltzer & RTD",4.8,"p6_10","jd country cocktails lynchburg lemonade downhome punch southern peach"],
+  ["Happy Dad Hard Seltzer","Seltzer & RTD",5.0,"p12","happy dad nelk"],["Happy Dad Hard Tea","Seltzer & RTD",5.0,"c24","happy dad"],
+  ["Happy Dad Hard Lemonade (24 oz)","Seltzer & RTD",10.0,"c24","happy dad"],
+  ["Surfside Iced Tea / Lemonade + Vodka","Seltzer & RTD",4.5,"c12","surfside vodka tea"],
+  ["Angry Orchard Crisp Apple","Seltzer & RTD",5.0,"p6","hard cider"],
+  ["Simply Spiked Lemonade","Seltzer & RTD",5.0,"p12",""],["Sun Cruiser","Seltzer & RTD",4.5,"p12",""],
+  ["Cayman Jack Margarita","Seltzer & RTD",5.8,"p6",""],
+  ["Jack Daniel's & Coca-Cola","Seltzer & RTD",7.0,"c12","jack and coke can"],
+  ["Crown Royal Washington Apple (can)","Seltzer & RTD",7.0,"c12","canned cocktail"],
+  ["Seagram's Escapes","Seltzer & RTD",3.2,"p6_112","seagrams jamaican me happy"],
+  ["Hard Mountain Dew","Seltzer & RTD",5.0,"p12",""],["Arnold Palmer Spiked","Seltzer & RTD",5.0,"c24",""],
+  ["Modelo Chelada","Seltzer & RTD",3.5,"c24","michelada"],["Bud Light Chelada","Seltzer & RTD",4.2,"c25","michelada"],
+  // Cocktails & party drinks
+  ["BuzzBallz Cocktails (liquor-based)","Cocktails & party",15.0,"m200","buzz balls buzzballs buzzball spirit rita lime strawberry choc tease tequila vodka"],
+  ["BuzzBallz Chillers (wine-based)","Cocktails & party",15.0,"m187","buzz balls buzzballs buzzball wine forbidden apple peach berry cherry"],
+  ["BuzzBallz Mixed Drinks (malt-based)","Cocktails & party",15.0,"m192","buzz balls buzzballs buzzball malt"],
+  ["BuzzBallz Biggie (Cocktails, liquor-based)","Cocktails & party",15.0,"l175b","buzz balls buzzballs biggies large"],
+  ["BuzzBallz Biggie (Chillers, wine-based)","Cocktails & party",15.0,"l15","buzz balls buzzballs biggies large"],
+  ["BeatBox Party Punch (wine or malt-based)","Cocktails & party",11.1,"m500","beat box carton tetra"],
+  ["BeatBox Hard Tea (malt-based)","Cocktails & party",8.0,"m500","beat box carton tea"],
+  ["BeatBox Zero Sugar","Cocktails & party",6.0,"m500","beat box carton"],
+  ["ViBE Twisted Sips (wine cocktail)","Cocktails & party",12.0,"m500","vibe vine twisted sips carton box fruit punch pink lemonade"],
+  ["Bandit Strawberry Lemonade (wine cocktail)","Cocktails & party",13.0,"m500","bandit carton box"],
+  ["Monaco Cocktails","Cocktails & party",9.0,"c12","monaco citrus rush blue crush tequila lime crush hard lemonade"],
+  ["Cutwater Piña Colada","Cocktails & party",13.0,"c12","canned cocktail pina colada"],
+  ["Cutwater Long Island Iced Tea","Cocktails & party",13.0,"c12","canned cocktail liit"],
+  ["Cutwater Espresso Martini","Cocktails & party",13.0,"c12","canned cocktail"],
+  ["Cutwater White Russian","Cocktails & party",13.0,"c12","canned cocktail"],
+  ["Cutwater Margarita (lime, mango, spicy & others)","Cocktails & party",12.5,"c12","canned cocktail margaritas"],
+  ["Cutwater Tiki Rum Mai Tai","Cocktails & party",12.5,"c12","canned cocktail"],
+  ["Cutwater Lemon Drop Martini","Cocktails & party",11.0,"c12","canned cocktail"],
+  ["Cutwater Strawberry Margarita","Cocktails & party",10.0,"c12","canned cocktail"],
+  ["Cutwater Bloody Mary","Cocktails & party",10.0,"c12","canned cocktail"],
+  ["Cutwater Gin Collins","Cocktails & party",9.0,"c12","canned cocktail"],
+  ["Cutwater Vodka Mule","Cocktails & party",7.0,"c12","canned cocktail moscow"],
+  ["Cutwater Tequila Paloma","Cocktails & party",7.0,"c12","canned cocktail"],
+  ["Cutwater Vodka Transfusion","Cocktails & party",7.0,"c12","canned cocktail"],
+  ["Clubtails (liquor-based)","Cocktails & party",10.0,"c12","club tails clubtail"],
+  ["Clubtails Crushers (liquor-based)","Cocktails & party",5.0,"c12","club tails clubtail crusher"],
+  ["Long Drink Traditional","Cocktails & party",5.5,"p6","finnish long drink"],
+  ["Long Drink Strong","Cocktails & party",8.5,"p6","finnish long drink"],
+  ["Fishers Island Lemonade","Cocktails & party",9.0,"p4","fil"],
+  // Wine
+  ["Red wine (generic)","Wine",13.5,"g5","cabernet merlot pinot"],["White wine (generic)","Wine",12.5,"g5","chardonnay pinot grigio sauvignon"],
+  ["Rosé (generic)","Wine",12.0,"g5",""],["Champagne / sparkling (generic)","Wine",11.5,"g5","prosecco"],
+  ["Moscato (generic)","Wine",9.0,"g5",""],["Barefoot","Wine",13.0,"w750",""],["Sutter Home","Wine",13.0,"s187",""],
+  ["Josh Cellars","Wine",13.5,"w750",""],["Apothic Red","Wine",13.5,"w750",""],["19 Crimes","Wine",13.5,"w750",""],
+  ["Yellow Tail","Wine",13.0,"w750","yellowtail"],["Kendall-Jackson Chardonnay","Wine",13.5,"w750","kj"],
+  ["La Marca Prosecco","Wine",11.0,"w750",""],["Cupcake","Wine",13.0,"w750",""],
+  ["Franzia","Wine",10.0,"box5","box wine"],
+  ["Bota Mini Cabernet Sauvignon","Wine",13.0,"w500","bota box mini carton 500"],
+  ["Bota Mini Chardonnay","Wine",13.0,"w500","bota box mini carton 500"],
+  ["Bota Mini Pinot Grigio","Wine",12.0,"w500","bota box mini carton 500"],
+  ["Bota Mini Sauvignon Blanc","Wine",13.0,"w500","bota box mini carton 500"],
+  ["Bota Mini Dry Rosé","Wine",11.5,"w500","bota box mini carton 500 rose"],
+  ["Bota Breeze Mini","Wine",8.0,"w500","bota box breeze mini carton 500 light"],
+  ["Black Box 500 mL (Cabernet, Chardonnay, Pinot Noir)","Wine",13.0,"w500","black box tetra carton 500 merlot"],
+  ["Black Box Rosé 500 mL","Wine",12.5,"w500","black box tetra carton 500 rose"],
+  ["Bandit Cabernet Sauvignon","Wine",13.8,"w500","bandit carton box 500"],
+  ["Bandit Chardonnay","Wine",13.6,"w500","bandit carton box 500"],
+  ["Bandit Pinot Grigio","Wine",13.0,"w500","bandit carton box 500"],
+  ["Wine Cube Cabernet / Chardonnay (Target)","Wine",13.0,"w500","wine cube carton 500 target"],
+  ["Wine Cube Pinot Grigio / Sauvignon Blanc / Rosé (Target)","Wine",13.5,"w500","wine cube carton 500 target rose"],
+  ["Vendange Cabernet Sauvignon (500 mL)","Wine",14.0,"w500","vendange carton 500"],
+  ["Woodbridge Rosé (500 mL)","Wine",11.0,"w500","woodbridge carton 500 rose"],["Bota Box","Wine",13.5,"box3","box wine"],["Black Box","Wine",13.5,"box3","box wine"],
+  ["Carlo Rossi","Wine",11.0,"w15","jug"],["Stella Rosa","Wine",5.0,"w750",""],["Arbor Mist","Wine",6.0,"w750",""],
+  ["MD 20/20","Wine",13.0,"w750","mad dog"],["Wild Irish Rose","Wine",13.9,"w750",""],
+  // Generic liquor (no brand), 80 proof
+  ["Vodka (generic)","Vodka",80,"shot","generic well any brand"],
+  ["Rum (generic)","Rum",80,"shot","generic well any brand white silver"],
+  ["Spiced rum (generic)","Rum",70,"shot","generic well any brand"],
+  ["Whiskey (generic)","Whiskey",80,"shot","generic well any brand whisky"],
+  ["Bourbon (generic)","Whiskey",80,"shot","generic well any brand whiskey"],
+  ["Scotch (generic)","Whiskey",80,"shot","generic well any brand whisky"],
+  ["Brandy / Cognac (generic)","Whiskey",80,"shot","generic well any brand"],
+  ["Tequila (generic)","Tequila",80,"shot","generic well any brand"],
+  ["Mezcal (generic)","Tequila",80,"shot","generic well any brand"],
+  ["Gin (generic)","Gin",80,"shot","generic well any brand"],
+  // Vodka
+  ["Tito's","Vodka",80,"m750","titos"],["Smirnoff No. 21","Vodka",80,"m750","smirnoff"],["Smirnoff flavored","Vodka",60,"m750",""],
+  ["Absolut","Vodka",80,"m750",""],["Grey Goose","Vodka",80,"m750",""],["Ketel One","Vodka",80,"m750",""],
+  ["Svedka","Vodka",80,"m750",""],["New Amsterdam","Vodka",80,"m750",""],["Pinnacle","Vodka",80,"m750",""],
+  ["Burnett's","Vodka",80,"l175","burnetts"],["Deep Eddy","Vodka",80,"m750",""],["Deep Eddy flavored","Vodka",70,"m750",""],
+  ["Pink Whitney","Vodka",60,"m750","new amsterdam"],
+  // Whiskey / brandy
+  ["Jack Daniel's Old No. 7","Whiskey",80,"m750","jack daniels jd"],["Jack Daniel's Tennessee Honey","Whiskey",70,"m750","jack honey"],
+  ["Jim Beam","Whiskey",80,"m750",""],["Crown Royal","Whiskey",80,"m750",""],["Crown Royal Regal Apple","Whiskey",70,"m750","crown apple"],
+  ["Jameson","Whiskey",80,"m750",""],["Fireball","Whiskey",66,"nip","cinnamon"],["Maker's Mark","Whiskey",90,"m750","makers"],
+  ["Wild Turkey 101","Whiskey",101,"m750",""],["Evan Williams","Whiskey",86,"m750",""],["Buffalo Trace","Whiskey",90,"m750",""],
+  ["Bulleit Bourbon","Whiskey",90,"m750",""],["Woodford Reserve","Whiskey",90.4,"m750",""],
+  ["Seagram's 7 Crown","Whiskey",80,"m750","seven"],["Black Velvet","Whiskey",80,"l175",""],["Canadian Mist","Whiskey",80,"l175",""],
+  ["Skrewball Peanut Butter","Whiskey",70,"m750",""],["Southern Comfort","Whiskey",70,"m750","soco"],
+  ["Johnnie Walker Red","Whiskey",80,"m750",""],["Hennessy VS","Whiskey",80,"m750","cognac henny"],
+  ["E&J Brandy","Whiskey",80,"m750","brandy"],["Paul Masson Grande Amber","Whiskey",80,"m750","brandy"],
+  // Rum
+  ["Bacardi Superior","Rum",80,"m750","bacardi"],["Captain Morgan Spiced","Rum",70,"m750","captain"],
+  ["Malibu","Rum",42,"m750","coconut"],["Kraken","Rum",94,"m750",""],["Sailor Jerry","Rum",92,"m750",""],
+  ["Admiral Nelson's Spiced","Rum",70,"l175",""],
+  // Tequila
+  ["Jose Cuervo Especial","Tequila",80,"m750","cuervo"],["Patrón Silver","Tequila",80,"m750","patron"],
+  ["Don Julio Blanco","Tequila",80,"m750",""],["Casamigos","Tequila",80,"m750",""],["1800","Tequila",80,"m750",""],
+  ["Espolòn","Tequila",80,"m750","espolon"],["Teremana","Tequila",80,"m750",""],
+  // Gin
+  ["Tanqueray","Gin",94.6,"m750",""],["Bombay Sapphire","Gin",94,"m750",""],["Gordon's","Gin",80,"m750",""],
+  ["Seagram's Extra Dry Gin","Gin",80,"m750",""],["Beefeater","Gin",88,"m750",""],
+  // Liqueurs & other
+  ["Baileys Irish Cream","Liqueur & other",34,"m750",""],["Kahlúa","Liqueur & other",40,"m750","kahlua"],
+  ["Jägermeister","Liqueur & other",70,"m750","jager"],["RumChata","Liqueur & other",27.5,"m750",""],
+  ["Hpnotiq","Liqueur & other",34,"m750",""],["99 Bananas","Liqueur & other",99,"nip","99 brand"],
+  ["Goldschläger","Liqueur & other",87,"m750",""],["Rumple Minze","Liqueur & other",100,"m750",""],
+  ["Everclear 190","Liqueur & other",190,"m750","grain alcohol"],["Everclear 151","Liqueur & other",151,"m750","grain alcohol"]
+];
+const SPIRIT_CATS = ["Vodka","Whiskey","Rum","Tequila","Gin","Liqueur & other"];
+const CATS_BY_KIND = {beer:["Beer","Malt liquor","Seltzer & RTD","Cocktails & party"], wine:["Wine"], spirit:SPIRIT_CATS};
+const ALL_CATS = [].concat(CATS_BY_KIND.beer, CATS_BY_KIND.wine, CATS_BY_KIND.spirit);
+let ALL = DB.slice();
+const kindOf = cat => cat==="Wine" ? "wine" : SPIRIT_CATS.includes(cat) ? "spirit" : "beer";
+const GROUPS = {"All":()=>true,"Beer":c=>c==="Beer","Malt liquor":c=>c==="Malt liquor","Seltzer & RTD":c=>c==="Seltzer & RTD","Cocktails & party":c=>c==="Cocktails & party","Team added":null,"Wine":c=>c==="Wine","Liquor":c=>SPIRIT_CATS.includes(c)};
+
+const $ = id => document.getElementById(id);
+const fmt = n => n === 0 ? "0" : n >= 10 ? n.toFixed(1) : n.toFixed(n < 1 ? 2 : 1);
+const stdG = () => 14; // US standard drink: 14 g = 0.6 fl oz pure alcohol
+const gramsOf = (oz, abv) => oz * ML * (abv/100) * DENSITY;
+const volText = oz => `${+oz.toFixed(1)} fl oz`;
+
+let group = "All", sel = null, kind = "beer", portion = 1, log = [];
+try { log = JSON.parse(localStorage.getItem("sdc-log2")) || []; } catch(e){ log = []; }
+
+// Normalized search
+const norm = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9 ]/g,"");
+let INDEX = [];
+function rebuildIndex(){ INDEX = ALL.map(d => norm(d[0] + " " + d[1] + " " + (d[4]||""))); }
+rebuildIndex();
+const esc = t => String(t).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function renderChips(){
+  $("chips").innerHTML = Object.keys(GROUPS).map(g => `<button class="chip ${g===group?'on':''}" data-g="${g}">${g}</button>`).join("");
+}
+function strengthText(d){ return kindOf(d[1])==="spirit" ? `${d[2]} proof · ${d[2]/2}%` : `${d[2]}% ABV`; }
+function renderList(){
+  const terms = norm($("search").value).split(" ").filter(Boolean);
+  const rows = ALL.map((d,i)=>({d,i})).filter(({d,i}) => (group==="Team added" ? !!d[5] : GROUPS[group](d[1])) && terms.every(t => INDEX[i].includes(t)));
+  // When searching, put drinks whose name starts with the search first (e.g. "vodka" shows Vodka (generic) at the top)
+  if (terms.length){ const q = terms.join(" "); rows.sort((a,b) => (norm(a.d[0]).startsWith(q)?0:1) - (norm(b.d[0]).startsWith(q)?0:1)); }
+  $("count").textContent = `${rows.length} of ${ALL.length} drinks`;
+  $("list").innerHTML = rows.length ? rows.map(({d,i}) => `
+    <button class="item ${sel===i?'sel':''}" data-i="${i}">
+      <span><span class="nm">${esc(d[0])}</span><br><span class="meta">${esc(strengthText(d))}</span></span>
+      <span class="pill ${d[5]?'team':''}">${d[5]?'Team · ':''}${esc(d[1])}</span>
+    </button>`).join("") : `<div class="empty">Not in the list. Enter it as a custom drink on the right (type, ABV or proof from the label, package), then tap “Submit a missing drink” so the team can get it.</div>`;
+}
+function fillPackages(defId){
+  const groups = {};
+  P[kind].forEach(p => { const g = p[4] || ""; (groups[g] = groups[g] || []).push(p); });
+  $("pkg").innerHTML = Object.entries(groups).map(([g,ps]) => {
+    const opts = ps.map(p => `<option value="${p[0]}">${p[1]}</option>`).join("");
+    return g ? `<optgroup label="${g}">${opts}</optgroup>` : opts;
+  }).join("");
+  if (defId && P[kind].some(p=>p[0]===defId)) $("pkg").value = defId;
+  toggleCustom();
+}
+function setKind(k, keepStrength){
+  kind = k;
+  document.querySelectorAll("#kindSeg button").forEach(b => b.classList.toggle("on", b.dataset.k===k));
+  $("strengthLbl").textContent = k==="spirit" ? "Proof" : "ABV %";
+  $("strength").placeholder = k==="spirit" ? "e.g. 80" : k==="wine" ? "e.g. 12" : "e.g. 5";
+  if (!keepStrength) $("strength").value = "";
+  fillPackages(k==="spirit" ? "shot" : k==="wine" ? "g5" : "c12");
+}
+function toggleCustom(){ $("custom").classList.toggle("show", $("pkg").value==="custom"); }
+function abv(){ const v = parseFloat($("strength").value) || 0; return kind==="spirit" ? v/2 : v; }
+function pkgInfo(){
+  const id = $("pkg").value;
+  if (id==="custom"){
+    const s = parseFloat($("cSize").value) || 0, n = Math.max(1, parseInt($("cCount").value) || 1);
+    return {label: `${n>1?n+" × ":""}${s||0} oz`, oz: s, n};
+  }
+  const p = P[kind].find(p=>p[0]===id); return {label:p[1], oz:p[2], n:p[3]};
+}
+function renderGlasses(n){
+  const full = Math.floor(n), part = n - full, cap = 24; let h = "";
+  for (let k=0; k<Math.min(full,cap); k++) h += `<div class="glass"><i style="height:100%"></i></div>`;
+  if (full < cap && part > 0.04) h += `<div class="glass"><i style="height:${Math.round(part*100)}%"></i></div>`;
+  if (full > cap) h += `<span class="detail">+${full-cap}</span>`;
+  $("glasses").innerHTML = h;
+}
+function calc(){
+  const pk = pkgInfo(), q = Math.max(1, parseInt($("qty").value) || 1), a = abv();
+  const totalOz = pk.oz * pk.n * q * portion;
+  const g = gramsOf(totalOz, a), sd = g / stdG();
+  $("big").innerHTML = `${fmt(sd)}<small>${Math.abs(sd-1)<0.005?'drink':'drinks'}</small>`;
+  const perUnit = gramsOf(pk.oz, a) / stdG();
+  $("strengthHint").textContent = kind==="spirit" ? `= ${fmt(a)}% ABV` : "";
+  if ($("strength").value.trim()===""){ $("detail").textContent = kind==="spirit" ? "Enter the proof to calculate" : "Enter the ABV to calculate"; renderGlasses(0); return {pk, q, a, totalOz, g}; }
+  $("detail").innerHTML = `${volText(totalOz)} total · ${(sd*0.6).toFixed(2)} fl oz pure alcohol` + (pk.n*q>1 || portion<1 ? `<br>${fmt(perUnit)} per ${pk.n>1?"container":"serving"}` : "");
+  renderGlasses(sd);
+  return {pk, q, a, totalOz, g};
+}
+function select(i){
+  sel = i; const d = ALL[i];
+  $("selName").textContent = d[0]; $("selCat").textContent = d[5] ? d[1] + " · added by the team" : d[1];
+  setKind(kindOf(d[1]), true);
+  $("strength").value = d[2];
+  fillPackages(d[3]);
+  $("qty").value = 1; setPortion(1);
+  $("cName").value = d[0];
+  calc(); renderList(); updateTeamButtons();
+  if (window.innerWidth < 780) $("panel").scrollIntoView({behavior:"smooth", block:"start"});
+}
+function setPortion(p){ portion = p; document.querySelectorAll("#portion button").forEach(b => b.classList.toggle("on", +b.dataset.p===p)); }
+function customName(){ return $("cName").value.trim().replace(/\s+/g," "); }
+// Switch to a custom drink. keepName: keep what's in the name box (used when someone edits a picked drink's name).
+function goCustom(keepName){
+  const was = sel!==null ? ALL[sel][0] : null;
+  sel = null;
+  if (!keepName) $("cName").value = "";
+  $("selName").textContent = customName() || "Custom drink";
+  $("selCat").textContent = was && keepName ? `Custom drink, based on ${was}` : "Pick from the list, or fill in the details below";
+  renderList(); updateTeamButtons();
+}
+$("cName").addEventListener("input", () => {
+  if (sel!==null) goCustom(true);
+  $("selName").textContent = customName() || "Custom drink";
+});
+$("newCustom").addEventListener("click", () => {
+  goCustom(); setKind(kind); $("qty").value = 1; setPortion(1);
+  $("pkg").value === "custom" || toggleCustom(); calc();
+  $("cName").focus();
+});
+
+function renderLog(){
+  try { localStorage.setItem("sdc-log2", JSON.stringify(log)); } catch(e){}
+  const s = stdG();
+  $("tally").innerHTML = log.length ? log.map((t,k) => `
+    <div class="trow"><span>${t.q>1?t.q+" × ":""}${t.pkLabel} · ${t.name}<br>
+      <span class="meta">${t.kind==="spirit"?(t.a*2)+" proof":t.a+"%"}${t.portion<1?" · drank "+Math.round(t.portion*100)+"%":""}</span></span>
+      <span style="white-space:nowrap"><b>${fmt(t.g/s)}</b> <button class="x" data-k="${k}" aria-label="Remove">×</button></span></div>`).join("")
+    : `<div class="empty">Add drinks to total a day or a session.</div>`;
+  const g = log.reduce((a,t)=>a+t.g,0);
+  $("tot").textContent = fmt(g/s);
+  const us = g/14, f = $("flag");
+  if (us >= 4){
+    f.textContent = us >= 5 ? `${fmt(us)} US standard drinks — over NIAAA's binge marker for women (4+) and men (5+) if drunk within about two hours.`
+                            : `${fmt(us)} US standard drinks — at NIAAA's binge marker for women (4+) if drunk within about two hours.`;
+    f.classList.add("show");
+  } else f.classList.remove("show");
+}
+
+// Events
+$("chips").addEventListener("click", e => { const g = e.target.dataset.g; if(g){ group=g; renderChips(); renderList(); }});
+$("list").addEventListener("click", e => { const b = e.target.closest(".item"); if(b) select(+b.dataset.i); });
+$("search").addEventListener("input", renderList);
+$("search").addEventListener("keydown", e => { if (e.key==="Enter"){ const f = $("list").querySelector(".item"); if (f) select(+f.dataset.i); }});
+$("kindSeg").addEventListener("click", e => { const k = e.target.dataset.k; if(k && k!==kind){ goCustom(); setKind(k); calc(); }});
+$("strength").addEventListener("input", () => { calc(); });
+$("qty").addEventListener("input", calc);
+$("minus").addEventListener("click", () => { $("qty").value = Math.max(1,(parseInt($("qty").value)||1)-1); calc(); });
+$("plus").addEventListener("click", () => { $("qty").value = (parseInt($("qty").value)||0)+1; calc(); });
+$("pkg").addEventListener("change", () => { toggleCustom(); calc(); });
+["cSize","cCount"].forEach(id => $(id).addEventListener("input", calc));
+$("portion").addEventListener("click", e => { const p = e.target.dataset.p; if(p){ setPortion(+p); calc(); }});
+$("add").addEventListener("click", () => {
+  const r = calc(); if (r.g <= 0) return;
+  log.push({name: sel!==null ? ALL[sel][0] : (customName() || "Custom drink"), kind, a: r.a, q: r.q, pkLabel: r.pk.label, portion, g: r.g});
+  renderLog();
+  const b = $("add"); b.textContent = "Added ✓"; setTimeout(()=> b.textContent = "Add to log", 900);
+});
+$("tally").addEventListener("click", e => { const k = e.target.dataset.k; if(k!==undefined){ log.splice(+k,1); renderLog(); }});
+$("clear").addEventListener("click", () => { log = []; renderLog(); });
+$("copy").addEventListener("click", async () => {
+  const s = stdG();
+  const lines = log.map(t => `${t.q} × ${t.pkLabel} — ${t.name} (${t.kind==="spirit"?(t.a*2)+" proof":t.a+"%"})${t.portion<1?", drank "+Math.round(t.portion*100)+"%":""}: ${fmt(t.g/s)}`);
+  lines.push(`Total: ${fmt(log.reduce((a,t)=>a+t.g,0)/s)} US standard drinks`);
+  const b = $("copy");
+  try { await navigator.clipboard.writeText(lines.join("\n")); b.textContent = "Copied ✓"; }
+  catch(e){ b.textContent = "Copy blocked"; }
+  setTimeout(()=> b.textContent = "Copy", 1200);
+});
+
+// ---------- Team list (shared, via Supabase) ----------
+// Anyone can submit a drink (saved as "pending"). Only drinks the owner approves
+// in the Supabase Table Editor (status = approved) are shown here.
+const SUPABASE_URL = "https://iqvoeqpypztmhkfqfcal.supabase.co";
+const SUPABASE_KEY = "sb_publishable_nv0kfzmfOUuuCN7DIJQbMA_h5bhJ6lR"; // publishable key: safe to be public; access is limited by database rules
+let sb = null, teamRows = [];
+
+function teamItems(){
+  const out = [];
+  for (const r of teamRows) {
+    if (!r || typeof r.name !== "string" || !r.name.trim() || !ALL_CATS.includes(r.category)) continue;
+    const v = Number(r.strength); if (!isFinite(v) || v < 0 || v > 200) continue;
+    const k = kindOf(r.category);
+    const pkg = P[k].some(p => p[0]===r.package && p[0]!=="custom") ? r.package : P[k][0][0];
+    out.push([r.name.trim().slice(0,80), r.category, v, pkg, String(r.aliases||"").slice(0,120), {id:String(r.id)}]);
+  }
+  return out.sort((a,b) => a[0].localeCompare(b[0]));
+}
+function rebuildAll(){
+  const selTeam = sel!==null && ALL[sel] && ALL[sel][5] ? ALL[sel][5].id : null;
+  ALL = DB.concat(teamItems()); rebuildIndex();
+  if (selTeam){ const j = ALL.findIndex(d => d[5] && d[5].id===selTeam); if (j>=0) sel = j; else goCustom(); }
+  renderList();
+}
+function setStatus(t){ $("teamStatus").textContent = t; }
+function updateTeamButtons(){ /* no per-drink team actions in the public version */ }
+function fillSaveCats(){
+  $("sCat").innerHTML = CATS_BY_KIND[kind].map(c => `<option>${esc(c)}</option>`).join("");
+  const cur = sel!==null ? ALL[sel][1] : null;
+  if (cur && CATS_BY_KIND[kind].includes(cur)) $("sCat").value = cur;
+}
+function saveMsg(t, err){ const m = $("saveMsg"); m.textContent = t; m.className = "msg" + (err ? " err" : ""); }
+
+$("openSave").addEventListener("click", () => {
+  const f = $("saveForm"), show = !f.classList.contains("show");
+  f.classList.toggle("show", show); saveMsg("");
+  if (show){ fillSaveCats(); if (sel===null && !$("sName").value) $("sName").value = customName(); $("sName").focus(); }
+});
+$("cancelSave").addEventListener("click", () => $("saveForm").classList.remove("show"));
+$("kindSeg").addEventListener("click", () => { if ($("saveForm").classList.contains("show")) fillSaveCats(); });
+
+let lastSubmit = 0;
+$("saveTeam").addEventListener("click", async () => {
+  if (!sb) return saveMsg("Submitting isn't available right now. Check your connection and reload.", true);
+  const name = $("sName").value.trim().replace(/\s+/g, " ");
+  if (!name) return saveMsg("Enter a drink name.", true);
+  if (ALL.some(d => norm(d[0]) === norm(name))) return saveMsg("That drink is already in the list.", true);
+  const val = parseFloat($("strength").value);
+  if (!isFinite(val) || val < 0 || val > (kind==="spirit" ? 200 : 100))
+    return saveMsg(kind==="spirit" ? "Enter a proof between 0 and 200 above." : "Enter an ABV between 0 and 100 above.", true);
+  if (Date.now() - lastSubmit < 5000) return saveMsg("Please wait a few seconds before submitting another.", true);
+  const row = { name, category: $("sCat").value, strength: val,
+                package: $("pkg").value==="custom" ? P[kind][0][0] : $("pkg").value,
+                aliases: $("sKeys").value.trim().slice(0,120) };
+  const b = $("saveTeam"); b.disabled = true; saveMsg("Submitting…");
+  try {
+    const { error } = await sb.from("drinks").insert(row);
+    if (error) throw error;
+    lastSubmit = Date.now();
+    $("sName").value = ""; $("sKeys").value = "";
+    saveMsg(`Thanks! “${name}” was submitted. It will show up for everyone once it's approved.`);
+  } catch(e){
+    const code = e && e.code;
+    saveMsg(code==="23505" ? "That drink has already been submitted and is waiting for review."
+          : code==="23514" ? "Something in that entry is out of range. Check the strength and name."
+          : /waiting for review/i.test(e && e.message || "") ? "Too many drinks are waiting for review. Please try again later."
+          : "Couldn't submit just now. Try again in a moment.", true);
+  } finally { b.disabled = false; }
+});
+
+async function loadTeam(){
+  try {
+    const { data, error } = await sb.from("drinks").select("id,name,category,strength,package,aliases").eq("status","approved").limit(1000);
+    if (error) throw error;
+    teamRows = data || []; rebuildAll();
+    const n = teamRows.length;
+    setStatus((n ? `${n} drink${n===1?"":"s"} added by the team. ` : "") + "Missing a drink? Enter it below, then tap “Submit a missing drink.”");
+  } catch(e){
+    setStatus("Team drinks couldn't load right now. Built-in drinks still work.");
+  }
+}
+
+(function initTeam(){
+  if (!window.supabase || typeof window.supabase.createClient !== "function"){
+    setStatus("Team drinks couldn't load right now. Built-in drinks still work."); return;
+  }
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+  setStatus("Loading team drinks…");
+  loadTeam();
+  // Pick up newly approved drinks when someone comes back to the tab.
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") loadTeam(); });
+})();
+
+renderChips(); renderList(); setKind("beer"); calc(); renderLog();
+</script>
+</body>
+</html>
