@@ -37,7 +37,8 @@
   .chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
   .chip{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
   .chip.on{background:var(--amber);color:var(--accent-ink);border-color:var(--amber)}
-  .count{font-size:12.5px;color:var(--muted);margin-bottom:4px}
+  .count{font-size:12.5px;color:var(--muted);margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .linkbtn{border:0;background:none;color:var(--amber);font:inherit;font-weight:600;font-size:13px;cursor:pointer;padding:2px 0}
   .list{max-height:520px;overflow:auto;margin:0 -6px;padding:0 6px}
   .item{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:10px 4px;font:inherit;color:inherit;cursor:pointer}
   .item:hover,.item.sel{background:var(--amber-soft)}
@@ -425,10 +426,11 @@ function renderList(){
   const rows = ALL.map((d,i)=>({d,i})).filter(({d,i}) => (group==="Team added" ? !!d[5] : GROUPS[group](d[1])) && terms.every(t => INDEX[i].includes(t)));
   // When searching, put drinks whose name starts with the search first (e.g. "vodka" shows Vodka (generic) at the top)
   if (terms.length){ const q = terms.join(" "); rows.sort((a,b) => (norm(a.d[0]).startsWith(q)?0:1) - (norm(b.d[0]).startsWith(q)?0:1)); }
-  $("count").textContent = `${rows.length} of ${ALL.length} drinks`;
   const browsingAll = !terms.length && group === "All";
   const collapsed = browsingAll && !listExpanded && rows.length > 4;
   const shown = collapsed ? rows.slice(0, 4) : rows;
+  $("count").innerHTML = `<span>${rows.length} of ${ALL.length} drinks</span>` +
+    (browsingAll && listExpanded && rows.length > 4 ? `<button class="linkbtn" id="collapseTop">Show fewer</button>` : "");
   const moreBtn = collapsed ? `<button class="more" id="showAll">Show all ${rows.length} drinks</button>`
                 : (browsingAll && listExpanded && rows.length > 4) ? `<button class="more" id="showFewer">Show fewer</button>` : "";
   $("list").innerHTML = (shown.length ? shown.map(({d,i}) => `
@@ -536,6 +538,7 @@ function renderLog(){
 
 // Events
 $("chips").addEventListener("click", e => { const g = e.target.dataset.g; if(g){ group=g; renderChips(); renderList(); }});
+$("count").addEventListener("click", e => { if (e.target.id === "collapseTop"){ listExpanded = false; renderList(); } });
 $("list").addEventListener("click", e => {
   if (e.target.id === "showAll"){ listExpanded = true; renderList(); return; }
   if (e.target.id === "showFewer"){ listExpanded = false; renderList(); $("search").scrollIntoView({block:"nearest"}); return; }
