@@ -10,12 +10,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    /* University of Oklahoma colors: Oklahoma Crimson #841617 on Oklahoma Cream #FDF9D8. */
-    --bg:#fdf9d8; --card:#fffef6; --ink:#1f1a1a; --muted:#6e6458; --line:#ece3c4;
+    /* University of Oklahoma colors: Oklahoma Crimson #841617 page with Oklahoma Cream #FDF9D8 panels and accents. */
+    --bg:#841617; --on-bg:#fdf9d8; --card:#fdf9d8; --field:#fffdf3; --ink:#1f1a1a; --muted:#6e6458; --line:#e4d9b0;
     --amber:#841617; --amber-soft:#f6e2d9; --accent-ink:#fff; --warn:#841617; --warn-soft:#f8e1e1;
   }
   @media (prefers-color-scheme: dark){
-    :root{ --bg:#141212; --card:#1e1a1a; --ink:#f3eeee; --muted:#a99ea0; --line:#352d2e;
+    :root{ --bg:#3d0b0c; --on-bg:#fdf9d8; --field:#26201f; --card:#1e1a1a; --ink:#f3eeee; --muted:#a99ea0; --line:#352d2e;
       --amber:#c8434a; --amber-soft:#3a1f20; --accent-ink:#ffffff; --warn:#f08c8e; --warn-soft:#3b1d1e; }
   }
   *{box-sizing:border-box}
@@ -26,7 +26,7 @@
   h1 span{color:var(--amber)}
   .sub{color:var(--muted);margin:4px 0 0;font-size:14px}
   h2{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:19px;margin:0 0 10px}
-  select,input{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 11px;width:100%}
+  select,input{font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:10px;padding:9px 11px;width:100%}
   select:focus,input:focus{outline:2px solid var(--amber);outline-offset:1px}
   label.sm{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;font-weight:500;text-transform:uppercase;letter-spacing:.04em}
   .grid{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;align-items:start}
@@ -36,18 +36,22 @@
   #search{font-size:17px;padding:12px 14px}
   .chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
   .chip{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
-  .chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .chip.on{background:var(--amber);color:var(--accent-ink);border-color:var(--amber)}
   .count{font-size:12.5px;color:var(--muted);margin-bottom:4px}
   .list{max-height:520px;overflow:auto;margin:0 -6px;padding:0 6px}
   .item{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:10px 4px;font:inherit;color:inherit;cursor:pointer}
   .item:hover,.item.sel{background:var(--amber-soft)}
+  /* Header sits on the crimson page: cream text */
+  header h1, header .sub, header .meta, header .meta b{color:var(--on-bg) !important}
+  header h1 span{color:var(--on-bg);opacity:.78}
+  header .sub, header .meta{opacity:.9}
   .item .nm{font-weight:500}
   .meta{font-size:12.5px;color:var(--muted)}
   .pill{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:1px 6px;white-space:nowrap}
   .fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
   .full{grid-column:1/-1}
   .stepper{display:flex;align-items:stretch;gap:0}
-  .stepper button{width:44px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:20px;cursor:pointer}
+  .stepper button{width:44px;border:1px solid var(--line);background:var(--field);color:var(--ink);font-size:20px;cursor:pointer}
   .stepper button:first-child{border-radius:10px 0 0 10px}
   .stepper button:last-child{border-radius:0 10px 10px 0}
   .stepper input{border-radius:0;text-align:center;border-left:0;border-right:0}
@@ -55,9 +59,9 @@
   .custom{display:none;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
   .custom.show{display:grid}
   .seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
-  .seg button{flex:1;border:0;background:var(--card);color:var(--ink);padding:9px 4px;font:inherit;font-size:13.5px;cursor:pointer;border-right:1px solid var(--line)}
+  .seg button{flex:1;border:0;background:var(--field);color:var(--ink);padding:9px 4px;font:inherit;font-size:13.5px;cursor:pointer;border-right:1px solid var(--line)}
   .seg button:last-child{border-right:0}
-  .seg button.on{background:var(--ink);color:var(--bg)}
+  .seg button.on{background:var(--amber);color:var(--accent-ink)}
   .result{text-align:center;padding:16px 8px 4px}
   .big{font-family:Inter,system-ui,sans-serif;font-weight:700;font-size:60px;line-height:1;color:var(--amber)}
   .big small{font-size:18px;color:var(--muted);font-weight:500;margin-left:4px}
