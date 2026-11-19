@@ -10,12 +10,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    /* University of Oklahoma colors: Oklahoma Crimson #841617 page with Oklahoma Cream #FDF9D8 panels and accents. */
-    --bg:#841617; --on-bg:#fdf9d8; --card:#fdf9d8; --field:#fffdf3; --ink:#1f1a1a; --muted:#6e6458; --line:#e4d9b0;
-    --amber:#841617; --amber-soft:#f6e2d9; --accent-ink:#fff; --warn:#841617; --warn-soft:#f8e1e1;
+    /* University of Oklahoma colors: Oklahoma Crimson #841617 page with white panels. */
+    --bg:#841617; --on-bg:#ffffff; --card:#ffffff; --field:#faf8f8; --ink:#1f1a1a; --muted:#6b6264; --line:#e6dede;
+    --amber:#841617; --amber-soft:#f6e3e3; --accent-ink:#fff; --warn:#841617; --warn-soft:#f8e1e1;
   }
   @media (prefers-color-scheme: dark){
-    :root{ --bg:#3d0b0c; --on-bg:#fdf9d8; --field:#26201f; --card:#1e1a1a; --ink:#f3eeee; --muted:#a99ea0; --line:#352d2e;
+    :root{ --bg:#3d0b0c; --on-bg:#ffffff; --field:#26201f; --card:#1e1a1a; --ink:#f3eeee; --muted:#a99ea0; --line:#352d2e;
       --amber:#c8434a; --amber-soft:#3a1f20; --accent-ink:#ffffff; --warn:#f08c8e; --warn-soft:#3b1d1e; }
   }
   *{box-sizing:border-box}
@@ -46,6 +46,7 @@
   header h1 span{color:var(--on-bg);opacity:.78}
   header .sub, header .meta{opacity:.9}
   .item .nm{font-weight:500}
+  .more{display:block;width:100%;margin-top:8px;padding:10px;border:1px dashed var(--line);border-radius:10px;background:transparent;color:var(--amber);font:inherit;font-weight:600;font-size:14px;cursor:pointer}
   .meta{font-size:12.5px;color:var(--muted)}
   .pill{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:1px 6px;white-space:nowrap}
   .fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
@@ -404,6 +405,7 @@ const stdG = () => 14; // US standard drink: 14 g = 0.6 fl oz pure alcohol
 const gramsOf = (oz, abv) => oz * ML * (abv/100) * DENSITY;
 const volText = oz => `${+oz.toFixed(1)} fl oz`;
 
+let listExpanded = false; // starting list shows a few drinks until someone searches, picks a category or taps "Show all"
 let group = "All", sel = null, kind = "beer", portion = 1, log = [];
 try { log = JSON.parse(localStorage.getItem("sdc-log2")) || []; } catch(e){ log = []; }
 
@@ -424,11 +426,16 @@ function renderList(){
   // When searching, put drinks whose name starts with the search first (e.g. "vodka" shows Vodka (generic) at the top)
   if (terms.length){ const q = terms.join(" "); rows.sort((a,b) => (norm(a.d[0]).startsWith(q)?0:1) - (norm(b.d[0]).startsWith(q)?0:1)); }
   $("count").textContent = `${rows.length} of ${ALL.length} drinks`;
-  $("list").innerHTML = rows.length ? rows.map(({d,i}) => `
+  const browsingAll = !terms.length && group === "All";
+  const collapsed = browsingAll && !listExpanded && rows.length > 4;
+  const shown = collapsed ? rows.slice(0, 4) : rows;
+  const moreBtn = collapsed ? `<button class="more" id="showAll">Show all ${rows.length} drinks</button>`
+                : (browsingAll && listExpanded && rows.length > 4) ? `<button class="more" id="showFewer">Show fewer</button>` : "";
+  $("list").innerHTML = (shown.length ? shown.map(({d,i}) => `
     <button class="item ${sel===i?'sel':''}" data-i="${i}">
       <span><span class="nm">${esc(d[0])}</span><br><span class="meta">${esc(strengthText(d))}</span></span>
       <span class="pill ${d[5]?'team':''}">${d[5]?'Team · ':''}${esc(d[1])}</span>
-    </button>`).join("") : `<div class="empty">Not in the list. Enter it as a custom drink on the right (type, ABV or proof from the label, package), then tap “Submit a missing drink” so the team can get it.</div>`;
+    </button>`).join("") : `<div class="empty">Not in the list. Enter it as a custom drink on the right (type, ABV or proof from the label, package), then tap “Submit a missing drink” so the team can get it.</div>`) + moreBtn;
 }
 function fillPackages(defId){
   const groups = {};
@@ -529,7 +536,11 @@ function renderLog(){
 
 // Events
 $("chips").addEventListener("click", e => { const g = e.target.dataset.g; if(g){ group=g; renderChips(); renderList(); }});
-$("list").addEventListener("click", e => { const b = e.target.closest(".item"); if(b) select(+b.dataset.i); });
+$("list").addEventListener("click", e => {
+  if (e.target.id === "showAll"){ listExpanded = true; renderList(); return; }
+  if (e.target.id === "showFewer"){ listExpanded = false; renderList(); $("search").scrollIntoView({block:"nearest"}); return; }
+  const b = e.target.closest(".item"); if(b) select(+b.dataset.i);
+});
 $("search").addEventListener("input", renderList);
 $("search").addEventListener("keydown", e => { if (e.key==="Enter"){ const f = $("list").querySelector(".item"); if (f) select(+f.dataset.i); }});
 $("kindSeg").addEventListener("click", e => { const k = e.target.dataset.k; if(k && k!==kind){ goCustom(); setKind(k); calc(); }});
