@@ -10,12 +10,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#f7f3ec; --card:#fffdf9; --ink:#231d16; --muted:#7a6e60; --line:#e6ddcf;
-    --amber:#c27a1a; --amber-soft:#f6e6cc; --accent-ink:#fff; --warn:#b4432c; --warn-soft:#f8e1da;
+    /* University of Oklahoma brand: Oklahoma Crimson #841617 with white and neutral grays (OU reserves cream for print). */
+    --bg:#f4f2f2; --card:#ffffff; --ink:#1f1a1a; --muted:#6b6264; --line:#e2dada;
+    --amber:#841617; --amber-soft:#f5e3e3; --accent-ink:#fff; --warn:#841617; --warn-soft:#f8e1e1;
+    --ou:#841617; --unt:#00853e;
   }
   @media (prefers-color-scheme: dark){
-    :root{ --bg:#16130f; --card:#201b16; --ink:#f2ebe0; --muted:#a8998a; --line:#352d25;
-      --amber:#e3a24a; --amber-soft:#3a2c19; --accent-ink:#1b150e; --warn:#ef8a72; --warn-soft:#3b211b; }
+    :root{ --bg:#141212; --card:#1e1a1a; --ink:#f3eeee; --muted:#a99ea0; --line:#352d2e;
+      --amber:#c8434a; --amber-soft:#3a1f20; --accent-ink:#ffffff; --warn:#f08c8e; --warn-soft:#3b1d1e; }
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
@@ -23,6 +25,11 @@
   header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:12px;margin-bottom:16px}
   h1{font-family:Inter,system-ui,sans-serif;font-weight:700;font-size:clamp(26px,5vw,36px);margin:0;letter-spacing:-.02em}
   h1 span{color:var(--amber)}
+  .badges{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .badge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;color:#fff;font-weight:600;font-size:13px;letter-spacing:.01em}
+  .badge::before{content:"";width:8px;height:8px;border-radius:50%;background:#fff;opacity:.85}
+  .badge.ou{background:var(--ou)}
+  .badge.unt{background:var(--unt)}
   .sub{color:var(--muted);margin:4px 0 0;font-size:14px}
   h2{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:19px;margin:0 0 10px}
   select,input{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 11px;width:100%}
@@ -91,6 +98,10 @@
 </head>
 <body>
 <div class="wrap">
+  <div class="badges" aria-label="Partner universities">
+    <span class="badge ou">University of Oklahoma</span>
+    <span class="badge unt">University of North Texas</span>
+  </div>
   <header>
     <div>
       <h1>Standard Drink <span>Calculator</span></h1>
